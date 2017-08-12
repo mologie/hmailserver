@@ -38,7 +38,8 @@ namespace HM
       SMTP_COMMAND_RSET = 1011,
       SMTP_COMMAND_NOOP = 1012,
       SMTP_COMMAND_ETRN = 1013,
-      SMTP_COMMAND_STARTTLS = 1014
+      SMTP_COMMAND_STARTTLS = 1014,
+      SMTP_COMMAND_XCLIENT = 1015,
    };
 
    class SMTPConnection : public TCPConnection
@@ -123,12 +124,12 @@ namespace HM
       void ProtocolNOOP_();
       void ProtocolRSET_();
 
-      bool LookupRoute_(const String &sToAddress, bool &bDomainIsRemote);
       void ProtocolMAIL_(const String &Request);
       void ProtocolQUIT_();
       void ProtocolHELP_();
       void ProtocolRCPT_(const String &Request);
       void ProtocolETRN_(const String &sRequest);
+      void ProtocolXCLIENT_(const String &sRequest);
       void ProtocolSTARTTLS_(const String &sRequest);
       void ProtocolUsername_(const String &sRequest);
       void ProtocolPassword_(const String &sRequest);
@@ -166,7 +167,14 @@ namespace HM
 
       String GetSpamTestResultMessage_(std::set<std::shared_ptr<SpamTestResult> > testResult) const;
 
-
+      // XCLIENT
+      IPAddress GetVirtualRemoteAddress_();
+      unsigned long GetVirtualRemotePort_();
+      inline String GetVRemoteIPStr_() { return GetVirtualRemoteAddress_().ToString(); }
+      IPAddress GetVirtualLocalAddress_();
+      unsigned long GetVirtualLocalPort_();
+      const String& GetVirtualHeloHost_();
+      inline const String& GetVirtualProto_() { return xclient_proto_;  }
 
       enum ConnectionState
       {
@@ -226,5 +234,14 @@ namespace HM
 
       RecipientParser recipientParser_;
       bool start_tls_used_;
+
+      // XCLIENT
+      String xclient_remote_name_;
+      IPAddress xclient_addr_; bool xclient_addr_set_;
+      uint16_t xclient_port_;
+      IPAddress xclient_destaddr_; bool xclient_destaddr_set_;
+      uint16_t xclient_destport_;
+      String xclient_proto_;
+      String xclient_helo_;
    };
 }

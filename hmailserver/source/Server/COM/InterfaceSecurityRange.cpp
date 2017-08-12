@@ -724,6 +724,38 @@ STDMETHODIMP InterfaceSecurityRange::put_RequireSSLTLSForAuth(VARIANT_BOOL newVa
    }
 }
 
+STDMETHODIMP InterfaceSecurityRange::get_AllowClientImpersonation(VARIANT_BOOL *pVal)
+{
+   try
+   {
+      if (!object_)
+         return GetAccessDenied();
+
+      *pVal = object_->GetXCLIENT() ? VARIANT_TRUE : VARIANT_FALSE;
+      return S_OK;
+   }
+   catch (...)
+   {
+      return COMError::GenerateGenericMessage();
+   }
+}
+
+STDMETHODIMP InterfaceSecurityRange::put_AllowClientImpersonation(VARIANT_BOOL newVal)
+{
+   try
+   {
+      if (!object_)
+         return GetAccessDenied();
+
+      object_->SetXCLIENT(newVal == VARIANT_TRUE);
+      return S_OK;
+   }
+   catch (...)
+   {
+      return COMError::GenerateGenericMessage();
+   }
+}
+
 STDMETHODIMP InterfaceSecurityRange::get_IsForwardingRelay(VARIANT_BOOL *pVal)
 {
    try

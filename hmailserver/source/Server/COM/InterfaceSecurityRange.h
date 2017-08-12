@@ -108,7 +108,8 @@ END_COM_MAP()
    STDMETHOD(put_EnableAntiVirus)(/*[in]*/ VARIANT_BOOL newVal);
    STDMETHOD(get_RequireSSLTLSForAuth)(/*[out, retval]*/ VARIANT_BOOL *pVal);
    STDMETHOD(put_RequireSSLTLSForAuth)(/*[in]*/ VARIANT_BOOL newVal);
-
+   STDMETHOD(get_AllowClientImpersonation)(/*[out, retval]*/ VARIANT_BOOL *pVal);
+   STDMETHOD(put_AllowClientImpersonation)(/*[in]*/ VARIANT_BOOL newVal);
    STDMETHOD(get_Expires)(/*[out, retval]*/ VARIANT_BOOL *pVal);
    STDMETHOD(put_Expires)(/*[in]*/ VARIANT_BOOL newVal);
 

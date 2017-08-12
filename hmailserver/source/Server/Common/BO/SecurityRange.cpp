@@ -161,6 +161,16 @@ namespace HM
       SetAllowOption(IPRANGE_REQUIRE_TLS_FOR_AUTH, bAllow);
    }
 
+   bool SecurityRange::GetXCLIENT() const
+   {
+      return GetAllowOption(IPRANGE_SMTP_XCLIENT);
+   }
+
+   void SecurityRange::SetXCLIENT(bool bAllow)
+   {
+      SetAllowOption(IPRANGE_SMTP_XCLIENT, bAllow);
+   }
+
    bool
    SecurityRange::GetAllowRelayL2L() const
    {

@@ -1277,6 +1277,9 @@ interface IInterfaceSecurityRange : IDispatch{
 
       [propget, id(29), helpstring("Require users to use SSL/TLS when authenticating.")] HRESULT RequireSSLTLSForAuth([out, retval] VARIANT_BOOL *pVal);
 		[propput, id(29), helpstring("Require users to use SSL/TLS when authenticating.")] HRESULT RequireSSLTLSForAuth([in] VARIANT_BOOL newVal);
+
+      [propget, id(30), helpstring("Allow use of the XCLIENT SMTP command.")] HRESULT AllowClientImpersonation([out, retval] VARIANT_BOOL *pVal);
+      [propput, id(30), helpstring("Allow use of the XCLIENT SMTP command.")] HRESULT AllowClientImpersonation([in] VARIANT_BOOL newVal);
 };
 
 [

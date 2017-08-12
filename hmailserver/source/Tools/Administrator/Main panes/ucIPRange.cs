@@ -87,6 +87,7 @@ namespace hMailServer.Administrator
          checkSpamProtection.Checked = _representedObject.EnableSpamProtection;
          checkAntiVirus.Checked = _representedObject.EnableAntiVirus;
          checkRequireSSLTLSForAuth.Checked = _representedObject.RequireSSLTLSForAuth;
+         checkImpersonation.Checked = _representedObject.AllowClientImpersonation;
 
          checkExpires.Checked = _representedObject.Expires;
          dateTimeExpiresTime.Value = Convert.ToDateTime(_representedObject.ExpiresTime);
@@ -141,6 +142,7 @@ namespace hMailServer.Administrator
          _representedObject.EnableSpamProtection = checkSpamProtection.Checked;
          _representedObject.EnableAntiVirus = checkAntiVirus.Checked;
          _representedObject.RequireSSLTLSForAuth = checkRequireSSLTLSForAuth.Checked;
+         _representedObject.AllowClientImpersonation = checkImpersonation.Checked;
 
          _representedObject.Expires = checkExpires.Checked;
          _representedObject.ExpiresTime = dateTimeExpiresTime.Value;

@@ -16,24 +16,24 @@ namespace HM
 
       enum RangeOptions
       {
-         IPRANGE_ALLOW_SMTP = 1,
-         IPRANGE_ALLOW_POP3 = 2,
-         IPRANGE_ALLOW_IMAP = 8,
-         //IPRANGE_REQUIRE_SMTP_AUTH_ONLY_EXTERNAL = 16,
-         //IPRANGE_REQUIRE_SMTP_AUTH = 32,
-         IPRANGE_RELAY_LOCAL_TO_LOCAL = 64,
-         IPRANGE_RELAY_LOCAL_TO_REMOTE = 128,
-         IPRANGE_RELAY_REMOTE_TO_LOCAL = 256,
-         IPRANGE_RELAY_REMOTE_TO_REMOTE = 512,
-         IPRANGE_SPAM_PROTECTION = 1024,
-         // IPRANGE_FORWARDING_RELAY = 2048, -- no longer used, as of 5.1. stored in separate object.
-         IPRANGE_VIRUS_PROTECTION = 4096,
-         IPRANGE_SMTP_AUTH_LOCAL_TO_LOCAL = 8192,
-         IPRANGE_SMTP_AUTH_LOCAL_TO_EXTERNAL = 16384,
-         IPRANGE_SMTP_AUTH_EXTERNAL_TO_LOCAL = 32768,
-         IPRANGE_SMTP_AUTH_EXTERNAL_TO_EXTERNAL = 65536,
-
-         IPRANGE_REQUIRE_TLS_FOR_AUTH = 131072
+         IPRANGE_ALLOW_SMTP = (1 << 0),
+         IPRANGE_ALLOW_POP3 = (1 << 1),
+         IPRANGE_ALLOW_IMAP = (1 << 3),
+         //IPRANGE_REQUIRE_SMTP_AUTH_ONLY_EXTERNAL = (1 << 4),
+         //IPRANGE_REQUIRE_SMTP_AUTH = (1 << 5),
+         IPRANGE_RELAY_LOCAL_TO_LOCAL = (1 << 6),
+         IPRANGE_RELAY_LOCAL_TO_REMOTE = (1 << 7),
+         IPRANGE_RELAY_REMOTE_TO_LOCAL = (1 << 8),
+         IPRANGE_RELAY_REMOTE_TO_REMOTE = (1 << 9),
+         IPRANGE_SPAM_PROTECTION = (1 << 10),
+         // IPRANGE_FORWARDING_RELAY = (1 << 11), -- no longer used, as of 5.1. stored in separate object.
+         IPRANGE_VIRUS_PROTECTION = (1 << 12),
+         IPRANGE_SMTP_AUTH_LOCAL_TO_LOCAL = (1 << 13),
+         IPRANGE_SMTP_AUTH_LOCAL_TO_EXTERNAL = (1 << 14),
+         IPRANGE_SMTP_AUTH_EXTERNAL_TO_LOCAL = (1 << 15),
+         IPRANGE_SMTP_AUTH_EXTERNAL_TO_EXTERNAL = (1 << 16),
+         IPRANGE_REQUIRE_TLS_FOR_AUTH = (1 << 17),
+         IPRANGE_SMTP_XCLIENT = (1 << 18),
       };
 
 
@@ -108,6 +108,8 @@ namespace HM
       bool GetRequireTLSForAuth() const ;
       void SetRequireTLSForAuth(bool require);
 
+      bool GetXCLIENT() const;
+      void SetXCLIENT(bool bAllow);
 
       bool XMLStore (XNode *pParentNode, int iOptions);
       bool XMLLoad (XNode *pSecurityRangeNode, int iOptions);

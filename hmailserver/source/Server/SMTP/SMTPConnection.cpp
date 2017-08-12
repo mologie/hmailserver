@@ -93,7 +93,11 @@ namespace HM
       type_(SPNone),
       pending_disconnect_(false),
       isAuthenticated_(false),
-      start_tls_used_(false)
+      start_tls_used_(false),
+      xclient_addr_set_(false),
+      xclient_port_(0),
+      xclient_destaddr_set_(false),
+      xclient_destport_(0)
    {
 
       smtpconf_ = Configuration::Instance()->GetSMTPConfiguration();
@@ -225,6 +229,8 @@ namespace HM
          return SMTP_COMMAND_ETRN;
       else if (sFirstWord == _T("STARTTLS"))
          return SMTP_COMMAND_STARTTLS;
+      else if (sFirstWord == _T("XCLIENT"))
+	      return SMTP_COMMAND_XCLIENT;
 
       return SMTP_COMMAND_UNKNOWN;
    }
@@ -268,7 +274,7 @@ namespace HM
          // Append
          sLogData = "RECEIVED: " + sLogData;
 
-         LOG_SMTP(GetSessionID(), GetIPAddressString(), sLogData);      
+         LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), sLogData);      
       }
    }
 
@@ -352,6 +358,7 @@ namespace HM
                   case SMTP_COMMAND_ETRN: ProtocolETRN_(sRequest); break;
                   case SMTP_COMMAND_VRFY: EnqueueWrite_("502 VRFY disallowed."); break;
                   case SMTP_COMMAND_DATA: ProtocolDATA_(); break;
+                  case SMTP_COMMAND_XCLIENT: ProtocolXCLIENT_(sRequest); break;
                   default:
                      SendErrorResponse_(503, "Bad sequence of commands"); 
                }
@@ -390,7 +397,7 @@ namespace HM
    {
       // Check if spam protection is enabled for this IP address.
       if (!GetSecurityRange()->GetSpamProtection() ||
-           SpamProtection::IsWhiteListed(sFromAddress, GetRemoteEndpointAddress()))
+           SpamProtection::IsWhiteListed(sFromAddress, GetVirtualRemoteAddress_()))
       {
          type_ = SPNone;
          return;
@@ -398,7 +405,7 @@ namespace HM
 
       std::shared_ptr<IncomingRelays> incomingRelays = Configuration::Instance()->GetSMTPConfiguration()->GetIncomingRelays();
       // Check if we should do it before or after data transfer
-      if (incomingRelays->IsIncomingRelay(GetRemoteEndpointAddress()))
+      if (incomingRelays->IsIncomingRelay(GetVirtualRemoteAddress_()))
          type_ = SPPostTransmission;
       else 
          type_ = SPPreTransmission;
@@ -499,7 +506,7 @@ namespace HM
             // which is configured to be a forwarding relay. This means that
             // we can start spam protection now.
 
-            if (!DoSpamProtection_(SPPreTransmission, sFromAddress, helo_host_, GetRemoteEndpointAddress()))
+            if (!DoSpamProtection_(SPPreTransmission, sFromAddress, GetVirtualHeloHost_(), GetVirtualRemoteAddress_()))
                return;
          }
       }
@@ -651,7 +658,7 @@ namespace HM
 
       if (dp != RecipientParser::DP_Possible)
       {
-         AWStats::LogDeliveryFailure(GetIPAddressString(), current_message_->GetFromAddress(), sRecipientAddress, 550);
+         AWStats::LogDeliveryFailure(GetVRemoteIPStr_(), current_message_->GetFromAddress(), sRecipientAddress, 550);
          
          SendErrorResponse_(550, sErrMsg);
          return;
@@ -674,7 +681,7 @@ namespace HM
       {
          // Authentication is required, but the user hasn't authenticated.
          SendErrorResponse_(530, "SMTP authentication is required.");
-         AWStats::LogDeliveryFailure(GetIPAddressString(), current_message_->GetFromAddress(), sRecipientAddress, 530);
+         AWStats::LogDeliveryFailure(GetVRemoteIPStr_(), current_message_->GetFromAddress(), sRecipientAddress, 530);
          return;
       }
 
@@ -694,7 +701,7 @@ namespace HM
       {
          // User is not allowed to send this email.
          SendErrorResponse_(550, "Delivery is not allowed to this address.");
-         AWStats::LogDeliveryFailure(GetIPAddressString(), current_message_->GetFromAddress(), sRecipientAddress, 550);
+         AWStats::LogDeliveryFailure(GetVRemoteIPStr_(), current_message_->GetFromAddress(), sRecipientAddress, 550);
          return;
       }
 
@@ -708,9 +715,9 @@ namespace HM
             // which is configured to be a forwarding relay. This means that
             // we can start spam protection now.
 
-            if (!DoSpamProtection_(SPPreTransmission, current_message_->GetFromAddress(), helo_host_, GetRemoteEndpointAddress()))
+            if (!DoSpamProtection_(SPPreTransmission, current_message_->GetFromAddress(), GetVirtualHeloHost_(), GetVirtualRemoteAddress_()))
             {
-               AWStats::LogDeliveryFailure(GetIPAddressString(), current_message_->GetFromAddress(), sRecipientAddress, 550);
+               AWStats::LogDeliveryFailure(GetVRemoteIPStr_(), current_message_->GetFromAddress(), sRecipientAddress, 550);
                return;
             }
          }
@@ -721,7 +728,7 @@ namespace HM
          std::shared_ptr<DomainAliases> pDA = ObjectCache::Instance()->GetDomainAliases();
          const String sToAddress = pDA->ApplyAliasesOnAddress(sRecipientAddress);
 
-         if (!SpamProtection::Instance()->PerformGreyListing(current_message_, spam_test_results_, sToAddress, GetRemoteEndpointAddress()))
+         if (!SpamProtection::Instance()->PerformGreyListing(current_message_, spam_test_results_, sToAddress, GetVirtualRemoteAddress_()))
          {
             if (current_message_->GetFromAddress().IsEmpty())
             {
@@ -771,14 +778,14 @@ namespace HM
       if (spType == SPPreTransmission)
       {
          std::set<std::shared_ptr<SpamTestResult> > setResult = 
-            SpamProtection::Instance()->RunPreTransmissionTests(sFromAddress, lIPAddress, GetRemoteEndpointAddress(), hostName);
+            SpamProtection::Instance()->RunPreTransmissionTests(sFromAddress, lIPAddress, GetVirtualRemoteAddress_(), hostName);
 
          spam_test_results_.insert(setResult.begin(), setResult.end());
       }
       else if (spType == SPPostTransmission)
       {
          std::set<std::shared_ptr<SpamTestResult> > setResult = 
-            SpamProtection::Instance()->RunPostTransmissionTests(sFromAddress, lIPAddress, GetRemoteEndpointAddress(), current_message_);
+            SpamProtection::Instance()->RunPostTransmissionTests(sFromAddress, lIPAddress, GetVirtualRemoteAddress_(), current_message_);
 
          spam_test_results_.insert(setResult.begin(), setResult.end());
 
@@ -802,7 +809,7 @@ namespace HM
             EnqueueWrite_("554 " + messageText);
 
          String sLogMessage;
-         sLogMessage.Format(_T("hMailServer SpamProtection rejected RCPT (Sender: %s, IP:%s, Reason: %s)"), sFromAddress.c_str(), String(GetIPAddressString()).c_str(), messageText.c_str());
+         sLogMessage.Format(_T("hMailServer SpamProtection rejected RCPT (Sender: %s, IP:%s, Reason: %s)"), sFromAddress.c_str(), String(GetVRemoteIPStr_()).c_str(), messageText.c_str());
          LOG_APPLICATION(sLogMessage);
 
          return false;
@@ -849,7 +856,7 @@ namespace HM
       {
          std::shared_ptr<MimeHeader> original_headers = Utilities::GetMimeHeader(transmission_buffer_->GetBuffer()->GetBuffer(), transmission_buffer_->GetBuffer()->GetSize());
 
-         SMTPMessageHeaderCreator header_creator(username_, GetIPAddressString(), isAuthenticated_, helo_host_, original_headers);
+         SMTPMessageHeaderCreator header_creator(username_, GetVRemoteIPStr_(), isAuthenticated_, GetVirtualHeloHost_(), original_headers);
          
          if (IsSSLConnection())
             header_creator.SetCipherInfo(GetCipherInfo());
@@ -906,7 +913,7 @@ namespace HM
          {
             sLogData.Format(_T("Size: %d KB, Max size: %d KB - DROP!!"), 
             iBufSizeKB, iMaxSizeDrop);
-            LOG_SMTP(GetSessionID(), GetIPAddressString(), sLogData);      
+            LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), sLogData);      
             String sMessage;
             sMessage.Format(_T("552 Message size exceeds the drop maximum message size. Size: %d KB, Max size: %d KB - DROP!"), 
                 iBufSizeKB, iMaxSizeDrop);
@@ -961,7 +968,7 @@ namespace HM
 
       if (!sArchiveDir.empty()) 
       {
-         LOG_SMTP(GetSessionID(), GetIPAddressString(), "Archiving..");      
+         LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "Archiving..");      
 
          bool bArchiveHardlinks = IniFileSettings::Instance()->GetArchiveHardlinks();
          String _messageFileName;
@@ -987,13 +994,13 @@ namespace HM
                sFileNameExclPath = FileUtilities::GetFileNameFromFullPath(_messageFileName);
                sMessageArchivePath = sArchiveDir + "\\" + sSenderDomain + "\\" + sSenderName + "\\Sent-" + sFileNameExclPath;
 
-               LOG_SMTP(GetSessionID(), GetIPAddressString(), "Local sender: " + sFromAddress1 + ". Putting in user folder: " + sMessageArchivePath);      
+               LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "Local sender: " + sFromAddress1 + ". Putting in user folder: " + sMessageArchivePath);      
 
                FileUtilities::Copy(_messageFileName, sMessageArchivePath, true);
             }
             else
             {
-               LOG_SMTP(GetSessionID(), GetIPAddressString(), "Non local sender, putting in common Inbound folder..");      
+               LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "Non local sender, putting in common Inbound folder..");      
 
                // First copy goes to common archive folder instead
                _messageFileName = PersistentMessage::GetFileName(current_message_);
@@ -1031,7 +1038,7 @@ namespace HM
                   if (bDomainIsLocal)
                   {
                      sMessageArchivePath2 = sArchiveDir + "\\" + sSenderDomain + "\\" + sSenderName + "\\" + sFileNameExclPath;
-                     LOG_SMTP(GetSessionID(), GetIPAddressString(), "Local recipient: " + sRecipientAddress + ". Putting in user folder: " + sMessageArchivePath2);      
+                     LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "Local recipient: " + sRecipientAddress + ". Putting in user folder: " + sMessageArchivePath2);      
 
                      if (bArchiveHardlinks) 
                      {
@@ -1043,11 +1050,11 @@ namespace HM
                         {
                            // If error try normal copy
                            FileUtilities::Copy(sMessageArchivePath, sMessageArchivePath2, true);
-                           LOG_SMTP(GetSessionID(), GetIPAddressString(), "HardLink failed.. Falling back to Copy.");      
+                           LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "HardLink failed.. Falling back to Copy.");      
                         }
                         else
                         {
-                           LOG_SMTP(GetSessionID(), GetIPAddressString(), "HardLink succeeded.");      
+                           LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "HardLink succeeded.");      
                         }
                      }
                      else
@@ -1064,7 +1071,7 @@ namespace HM
          {
             // Sender is either null/blank (ie <>) or some other odd thing happed so we'll save in Error folder
             // either way as failsafe.
-            LOG_SMTP(GetSessionID(), GetIPAddressString(), "Sender is NULL or invalid. Saving to Error folder.");      
+            LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "Sender is NULL or invalid. Saving to Error folder.");      
 
             _messageFileName = PersistentMessage::GetFileName(current_message_);
             sFileNameExclPath = FileUtilities::GetFileNameFromFullPath(_messageFileName);
@@ -1230,9 +1237,9 @@ namespace HM
          std::shared_ptr<ClientInfo> pClientInfo = std::shared_ptr<ClientInfo>(new ClientInfo);
 
          pClientInfo->SetUsername(username_);
-         pClientInfo->SetIPAddress(GetIPAddressString());
-         pClientInfo->SetPort(GetLocalEndpointPort());
-         pClientInfo->SetHELO(helo_host_);
+         pClientInfo->SetIPAddress(GetVRemoteIPStr_());
+         pClientInfo->SetPort(GetVirtualLocalPort_());
+         pClientInfo->SetHELO(GetVirtualHeloHost_());
 
          pContainer->AddObject("HMAILSERVER_MESSAGE", current_message_, ScriptObject::OTMessage);
          pContainer->AddObject("HMAILSERVER_CLIENT", pClientInfo, ScriptObject::OTClient);
@@ -1390,7 +1397,7 @@ namespace HM
          String sRecipientAddress = (*iterRecipient)->GetAddress();
 
          // Log the error message
-         AWStats::LogDeliveryFailure(GetIPAddressString(), sFromAddress, sRecipientAddress, 554);
+         AWStats::LogDeliveryFailure(GetVRemoteIPStr_(), sFromAddress, sRecipientAddress, 554);
 
          iterRecipient++;
       }
@@ -1477,6 +1484,8 @@ namespace HM
          sData += sAuth;
       }
 
+      sData += "\r\n250-XCLIENT NAME ADDR PORT PROTO HELO DESTADDR DESTPORT";
+
       sData += "\r\n250 HELP";
 
       EnqueueWrite_(sData);
@@ -1506,7 +1515,7 @@ namespace HM
 
          sLogData.TrimRight(_T("\r\n"));
 
-         LOG_SMTP(GetSessionID(), GetIPAddressString(), sLogData);
+         LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), sLogData);
       }
 
       EnqueueWrite(sData + "\r\n");
@@ -1612,9 +1621,9 @@ namespace HM
          std::shared_ptr<ClientInfo> pClientInfo = std::shared_ptr<ClientInfo>(new ClientInfo);
 
          pClientInfo->SetUsername(username_);
-         pClientInfo->SetIPAddress(GetIPAddressString());
-         pClientInfo->SetPort(GetLocalEndpointPort());
-         pClientInfo->SetHELO(helo_host_);
+         pClientInfo->SetIPAddress(GetVRemoteIPStr_());
+         pClientInfo->SetPort(GetVirtualLocalPort_());
+         pClientInfo->SetHELO(GetVirtualHeloHost_());
 
          pContainer->AddObject("HMAILSERVER_MESSAGE", current_message_, ScriptObject::OTMessage);
          pContainer->AddObject("HMAILSERVER_CLIENT", pClientInfo, ScriptObject::OTClient);
@@ -1833,7 +1842,7 @@ namespace HM
       if (vecParams.size() == 1)
       {
          SendErrorResponse_(500, "Syntax Error: No domain parameter included");
-         LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - No domain parameter included");      
+         LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - No domain parameter included");      
          return;
       }
       
@@ -1848,7 +1857,7 @@ namespace HM
       // See if sender supplied param matches one of our domains
       if (route && route->GetName() == sETRNDomain2)
       {
-         LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - Route found, continuing..");      
+         LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - Route found, continuing..");      
 
          std::shared_ptr<Routes> pRoutes = Configuration::Instance()->GetSMTPConfiguration()->GetRoutes();
          std::shared_ptr<Route> pRoute = pRoutes->GetItemByNameWithWildcardMatch(sETRNDomain.ToLower());
@@ -1857,7 +1866,7 @@ namespace HM
          {
             __int64 iRouteID = pRoute->GetID();
 
-            LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - Route settings read successfully.");      
+            LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - Route settings read successfully.");      
 
             int lTmpNoOfRetries = pRoute->NumberOfTries();
             int lTmpMinutesBetween = pRoute->MinutesBetweenTry();
@@ -1871,12 +1880,12 @@ namespace HM
                // Need to tell hmail to reload the settings
                //Configuration::Instance()->Load();
                EnqueueWrite_("250 OK, message queuing started for " + sETRNDomain.ToLower());
-               LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - 250 OK, message queuing started.");      
+               LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - 250 OK, message queuing started.");      
             }
             else
             {
                EnqueueWrite_("458 Unable to queue messages for " + sETRNDomain.ToLower());
-               LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - 458 Unable to queue messages");      
+               LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - 458 Unable to queue messages");      
             }
          return;
 
@@ -1885,7 +1894,7 @@ namespace HM
        {
           // Send that we don't accept ETRN for that domain or invalid param
           EnqueueWrite_("458 Error getting info for " + sETRNDomain.ToLower());
-          LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - Could not get Route values");      
+          LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - Could not get Route values");      
           return;
        }
      }
@@ -1893,10 +1902,190 @@ namespace HM
      {
          // Send that we don't accept ETRN for that domain or invalid param
          EnqueueWrite_("501 ETRN not supported for " + sETRNDomain.ToLower());
-         LOG_SMTP(GetSessionID(), GetIPAddressString(), "SMTPDeliverer - ETRN - Domain is not Route");      
+         LOG_SMTP(GetSessionID(), GetVRemoteIPStr_(), "SMTPDeliverer - ETRN - Domain is not Route");      
          return;
      }
    }
+
+   void
+   SMTPConnection::ProtocolXCLIENT_(const String &sRequest)
+   {
+      // This function implements the SMTP XCLIENT extension, which is supported by Postfix (among others)
+      // http://www.postfix.org/XCLIENT_README.html
+
+      static const wchar_t* szUnavailable = _T("[UNAVAILABLE]");
+      static const wchar_t* szTempUnavail = _T("[TEMPUNAVAIL]");
+
+      bool bAllowXCLIENT = GetSecurityRange()->GetAllowOption(SecurityRange::IPRANGE_SMTP_XCLIENT);
+      if (!bAllowXCLIENT)
+      {
+         SendErrorResponse_(550, "Thou shalt not impersonate! (IP range lacks XCLIENT flag.)");
+         return;
+      }
+
+      std::vector<String> vecParams = StringParser::SplitString(sRequest, " ");
+      if (vecParams.size() <= 1)
+      {
+         SendErrorResponse_(501, "Insufficient parameters");
+         return;
+      }
+
+      String sXName, sXAddr, sXPort, sXProto, sXHelo, sXDestAddr, sXDestPort;
+      IPAddress ipXAddr, ipXDestAddr;
+      uint16_t iXPort = 0, iXDestPort = 0;
+
+      // Retrieve and validate attributes
+      for (size_t i = 1; i < vecParams.size(); i++)
+      {
+         std::vector<String> vecAttrib = StringParser::SplitString(vecParams[i], "=");
+         if (vecAttrib.size() != 2)
+         {
+            SendErrorResponse_(501, "Invalid XCLIENT syntax (<key>=<value> required, and <value> must not contain equal signs)");
+            return;
+         }
+
+         const String& sKey = vecAttrib[0];
+         const String& sVal = vecAttrib[1];
+
+         if (sKey.length() == 0 || sVal.length() == 0)
+         {
+            SendErrorResponse_(501, "Invalid XCLIENT syntax (empty key/value)");
+            return;
+         }
+
+         String sValUpper = sVal;
+         sValUpper.MakeUpper();
+
+         if (sKey == _T("NAME"))
+         {
+            if (sVal.length() > 255)
+            {
+               SendErrorResponse_(501, "XCLIENT NAME length exceeded (255 characters)");
+               return;
+            }
+
+            if (sValUpper != szUnavailable && sValUpper != szTempUnavail)
+               sXName = sVal;
+         }
+         else if (sKey == _T("ADDR"))
+         {
+            if (sValUpper != szUnavailable)
+            {
+               sXAddr = sVal;
+
+               if (!ipXAddr.TryParse(sXAddr))
+               {
+                  SendErrorResponse_(501, "Could not parse XCLIENT ADDR");
+                  return;
+               }
+            }
+         }
+         else if (sKey == _T("PORT"))
+         {
+            if (sValUpper != szUnavailable)
+            {
+               sXPort = sVal;
+               iXPort = static_cast<uint16_t>(_ttoi(sXPort));
+
+               if (iXPort == 0)
+               {
+                  SendErrorResponse_(501, "Invalid XCLIENT PORT");
+                  return;
+               }
+            }
+         }
+         else if (sKey == _T("PROTO"))
+         {
+            if (sValUpper != szUnavailable)
+            {
+               if (sValUpper == _T("SMTP") || sValUpper == _T("ESMTP"))
+               {
+                  sXProto = sValUpper;
+               }
+               else
+               {
+                  SendErrorResponse_(501, "XCLIENT PROTO must be either 'SMTP' or 'ESMTP'");
+                  return;
+               }
+            }
+         }
+         else if (sKey == _T("HELO"))
+         {
+            if (sVal.length() > 255)
+            {
+               SendErrorResponse_(501, "XCLIENT HELO length exceeded (255 characters)");
+               return;
+            }
+
+            if (sValUpper != szUnavailable)
+               sXHelo = sVal;
+         }
+         else if (sKey == _T("LOGIN"))
+         {
+            SendErrorResponse_(501, "The LOGIN XCLIENT attribute is unsupported (and neither was it advertised - your client implementation is broken)");
+            return;
+         }
+         else if (sKey == _T("DESTADDR"))
+         {
+            if (sValUpper != szUnavailable)
+            {
+               sXDestAddr = sVal;
+
+               if (!ipXDestAddr.TryParse(sXDestAddr))
+               {
+                  SendErrorResponse_(501, "Could not parse XCLIENT DESTADDR");
+                  return;
+               }
+            }
+         }
+         else if (sKey == _T("DESTPORT"))
+         {
+            if (sValUpper != szUnavailable)
+            {
+               sXDestPort = sVal;
+               iXDestPort = static_cast<uint16_t>(_ttoi(sXDestPort));
+
+               if (iXDestPort == 0)
+               {
+                  SendErrorResponse_(501, "Invalid XCLIENT DESTPORT");
+                  return;
+               }
+            }
+         }
+         else
+         {
+            SendErrorResponse_(501, "Unsupported attribute: " + sKey);
+            return;
+         }
+      }
+
+      // Apply
+      if (!sXName.IsEmpty())
+         xclient_remote_name_ = sXName;
+      if (!sXAddr.IsEmpty()) {
+         xclient_addr_ = ipXAddr;
+         xclient_addr_set_ = true;
+      }
+      if (!sXPort.IsEmpty())
+         xclient_port_ = iXPort;
+      if (!sXProto.IsEmpty())
+         xclient_proto_ = sXProto;
+      if (!sXHelo.IsEmpty())
+         xclient_helo_ = sXHelo;
+      if (!sXDestAddr.IsEmpty()) {
+         xclient_destaddr_ = ipXDestAddr;
+         xclient_destaddr_set_ = true;
+      }
+      if (!sXDestPort.IsEmpty())
+         xclient_destport_ = iXDestPort;
+
+      // Pretend that the client just connected
+      helo_host_.Empty();
+      ResetLoginCredentials_();
+      ResetCurrentMessage_();
+      SendBanner_(); // resets current_state_
+   }
+
    void
    SMTPConnection::AuthenticateUsingPLAIN_(const String &sLine)
    {
@@ -1924,7 +2113,7 @@ namespace HM
       AccountLogon accountLogon;
       bool disconnect;
 
-      std::shared_ptr<const Account> pAccount = accountLogon.Logon(GetRemoteEndpointAddress(), username_, password_, disconnect);
+      std::shared_ptr<const Account> pAccount = accountLogon.Logon(GetVirtualRemoteAddress_(), username_, password_, disconnect);
          
       if (disconnect)
       {
@@ -2049,7 +2238,7 @@ namespace HM
       else
       {
          // Do normal post transmission spam protection. (typically SURBL)
-         if (!DoSpamProtection_(SPPostTransmission, current_message_->GetFromAddress(), helo_host_, GetRemoteEndpointAddress()))
+         if (!DoSpamProtection_(SPPostTransmission, current_message_->GetFromAddress(), GetVirtualHeloHost_(), GetVirtualRemoteAddress_()))
          {
             // We should stop message delivery
             return false;
@@ -2072,7 +2261,7 @@ namespace HM
 
       if (current_message_)
       {
-         if (SpamProtection::IsWhiteListed(current_message_->GetFromAddress(), GetRemoteEndpointAddress()))
+         if (SpamProtection::IsWhiteListed(current_message_->GetFromAddress(), GetVirtualRemoteAddress_()))
             return false;
       }
 
@@ -2175,18 +2364,46 @@ namespace HM
       return true;
    }
 
-
    bool
    SMTPConnection::GetAuthIsEnabled_()
    {
       const auto authDisabledOnPorts = IniFileSettings::Instance()->GetAuthDisabledOnPorts();
-      return authDisabledOnPorts.find(GetLocalEndpointPort()) == authDisabledOnPorts.end();
+      return authDisabledOnPorts.find(GetVirtualLocalPort_()) == authDisabledOnPorts.end();
    }
 
    void 
    SMTPConnection::ReportUnsupportedEsmtpExtension_(const String& parameter)
    {
       SendErrorResponse_(550, Formatter::Format("Unsupported ESMTP extension: {0}", parameter));
+   }
 
+   IPAddress
+   SMTPConnection::GetVirtualRemoteAddress_()
+   {
+      return xclient_addr_set_ ? xclient_addr_ : GetRemoteEndpointAddress();
+   }
+
+   unsigned long
+   SMTPConnection::GetVirtualRemotePort_()
+   {
+      return xclient_port_ > 0 ? xclient_port_ : GetSocket().remote_endpoint().port();
+   }
+
+   IPAddress
+   SMTPConnection::GetVirtualLocalAddress_()
+   {
+      return xclient_destaddr_set_ ? xclient_destaddr_ : GetSocket().local_endpoint().address();
+   }
+
+   unsigned long
+   SMTPConnection::GetVirtualLocalPort_()
+   {
+      return xclient_destport_ > 0 ? xclient_destport_ : GetLocalEndpointPort();
+   }
+
+   const String&
+   SMTPConnection::GetVirtualHeloHost_()
+   {
+      return xclient_helo_.length() > 0 ? xclient_helo_ : helo_host_;
    }
 }
