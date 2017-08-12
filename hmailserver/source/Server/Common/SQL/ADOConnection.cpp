@@ -228,23 +228,18 @@ namespace HM
          adoCommand->Execute(NULL, NULL, adCmdText);
 
          // Check what unique ID we got back (if we're interested).
-         _RecordsetPtr pIdentityRS;
-         BSTR bsIdentity;
-         if (iInsertID > 0)
+         if (iInsertID)
          {
+            _RecordsetPtr pIdentityRS;
             pIdentityRS.CreateInstance(__uuidof(Recordset));
             pIdentityRS->PutCursorLocation(adUseClient);
             pIdentityRS->PutRefActiveConnection(cADOConnection); 
             String sIdentitySQL = "SELECT @@IDENTITY AS IDENT";
-            bsIdentity = sIdentitySQL.AllocSysString();
+            BSTR bsIdentity = sIdentitySQL.AllocSysString();
 
             HRESULT hr = pIdentityRS->Open( bsIdentity, vtMissing, adOpenKeyset, adLockOptimistic , adCmdText);
             pIdentityRS->PutRefActiveConnection(NULL); 
-            
-         }
 
-         if (iInsertID)
-         {
             *iInsertID = GetIdentityFromRS_(pIdentityRS);
             ::SysFreeString( bsIdentity );
          }

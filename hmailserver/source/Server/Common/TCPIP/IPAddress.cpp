@@ -120,10 +120,10 @@ namespace HM
    void 
    IPAddress::SetIPV4Address_(__int64 address1)
    {
-      int i1 = (address1 >> 24) & 0xFF;
-      int i2 = (address1 >> 16) & 0xFF;
-      int i3 = (address1 >> 8) & 0xFF;
-      int i4 = address1 & 0xFF;
+      uint8_t i1 = (address1 >> 24) & 0xFF;
+      uint8_t i2 = (address1 >> 16) & 0xFF;
+      uint8_t i3 = (address1 >> 8) & 0xFF;
+      uint8_t i4 = address1 & 0xFF;
 
       boost::asio::ip::address_v4::bytes_type bytes_value = { { i1, i2, i3, i4 } };
 
@@ -133,23 +133,23 @@ namespace HM
    void 
    IPAddress::SetIPV6Address_(__int64 address1, __int64 address2)
    {
-      int i1 = (address1 >> 56) & 0xFF;
-      int i2 = (address1 >> 48) & 0xFF;
-      int i3 = (address1 >> 40) & 0xFF;
-      int i4 = (address1 >> 32) & 0xFF;
-      int i5 = (address1 >> 24) & 0xFF;
-      int i6 = (address1 >> 16) & 0xFF;
-      int i7 = (address1 >> 8) & 0xFF;
-      int i8 = address1 & 0xFF;
+      uint8_t i1 = (address1 >> 56) & 0xFF;
+      uint8_t i2 = (address1 >> 48) & 0xFF;
+      uint8_t i3 = (address1 >> 40) & 0xFF;
+      uint8_t i4 = (address1 >> 32) & 0xFF;
+      uint8_t i5 = (address1 >> 24) & 0xFF;
+      uint8_t i6 = (address1 >> 16) & 0xFF;
+      uint8_t i7 = (address1 >> 8) & 0xFF;
+      uint8_t i8 = address1 & 0xFF;
 
-      int b1 = (address2 >> 56) & 0xFF;
-      int b2 = (address2 >> 48) & 0xFF;
-      int b3 = (address2 >> 40) & 0xFF;
-      int b4 = (address2 >> 32) & 0xFF;
-      int b5 = (address2 >> 24) & 0xFF;
-      int b6 = (address2 >> 16) & 0xFF;
-      int b7 = (address2 >> 8) & 0xFF;
-      int b8 = address2 & 0xFF;
+      uint8_t b1 = (address2 >> 56) & 0xFF;
+      uint8_t b2 = (address2 >> 48) & 0xFF;
+      uint8_t b3 = (address2 >> 40) & 0xFF;
+      uint8_t b4 = (address2 >> 32) & 0xFF;
+      uint8_t b5 = (address2 >> 24) & 0xFF;
+      uint8_t b6 = (address2 >> 16) & 0xFF;
+      uint8_t b7 = (address2 >> 8) & 0xFF;
+      uint8_t b8 = address2 & 0xFF;
 
       boost::asio::ip::address_v6::bytes_type bytes_value = { { i1, i2, i3, i4, i5, i6, i7, i8, b1, b2, b3, b4, b5, b6, b7, b8 } };
 

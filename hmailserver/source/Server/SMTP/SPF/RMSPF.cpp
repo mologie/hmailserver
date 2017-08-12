@@ -370,7 +370,7 @@ spfstrdup(const char* s)
 static spfbool
 initspf(int multithreaded)
 {
-   HANDLE hMutex;
+   HANDLE hMutex = NULL;
 
    if (initialized > 0) // already initialized
       return true;
