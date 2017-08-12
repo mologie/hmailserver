@@ -620,10 +620,12 @@
     <ClInclude Include="..\Common\BO\WhiteListAddress.h" />
     <ClInclude Include="..\Common\BO\WhiteListAddresses.h" />
     <ClInclude Include="..\Common\Cache\AccountSizeCache.h" />
+    <ClInclude Include="..\Common\Cache\Cache.h" />
     <ClInclude Include="..\Common\Cache\CacheConfiguration.h" />
     <ClInclude Include="..\Common\Cache\CacheContainer.h" />
     <ClInclude Include="..\Common\Cache\CachedMessages.h" />
     <ClInclude Include="..\Common\Cache\CachedObject.h" />
+    <ClInclude Include="..\Common\Cache\CacheReaderWithDbFallback.h" />
     <ClInclude Include="..\Common\Cache\InboxIDCache.h" />
     <ClInclude Include="..\Common\Cache\MessageCache.h" />
     <ClInclude Include="..\Common\Diagnostics\Diagnostic.h" />
@@ -631,6 +633,7 @@
     <ClInclude Include="..\Common\Diagnostics\TestBackupDirectory.h" />
     <ClInclude Include="..\Common\Diagnostics\TestConnect.h" />
     <ClInclude Include="..\Common\Diagnostics\TestConnection.h" />
+    <ClInclude Include="..\Common\Diagnostics\TestConnectionResult.h" />
     <ClInclude Include="..\Common\Diagnostics\TestConnectToSelf.h" />
     <ClInclude Include="..\Common\Diagnostics\TestDataDirectory.h" />
     <ClInclude Include="..\Common\Diagnostics\TestErrorLogs.h" />
@@ -1076,12 +1079,16 @@
     <None Include="..\COM\InterfaceUtilities.rgs" />
     <None Include="..\COM\InterfaceWhiteListAddress.rgs" />
     <None Include="..\COM\InterfaceWhiteListAddresses.rgs" />
+    <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Common\Application\Errors.txt" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="hMailServer.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="hMailServer.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2679BEE5-8D11-4F4B-BC1A-49EEA96A3423}</ProjectGuid>
@@ -1297,7 +1304,6 @@ EXIT 0
     <Midl>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MkTypLibCompatible>false</MkTypLibCompatible>
-      <TargetEnvironment>Win32</TargetEnvironment>
       <GenerateStublessProxies>true</GenerateStublessProxies>
       <TypeLibraryName>$(IntDir)hMailServer.tlb</TypeLibraryName>
       <HeaderFileName>hMailServer.h</HeaderFileName>

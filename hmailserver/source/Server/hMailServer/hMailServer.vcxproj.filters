@@ -2945,6 +2945,15 @@
     <ClInclude Include="..\SMTP\StatisticsSender.h">
       <Filter>SMTP</Filter>
     </ClInclude>
+    <ClInclude Include="..\Common\Cache\Cache.h">
+      <Filter>Common\Cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Cache\CacheReaderWithDbFallback.h">
+      <Filter>Common\Cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Common\Diagnostics\TestConnectionResult.h">
+      <Filter>Common\Diagnostics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\COM\InterfaceAccount.rgs">
@@ -3214,6 +3223,7 @@
     <None Include="..\Common\Util\BlowFish.h2">
       <Filter>Common\Util</Filter>
     </None>
+    <None Include=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Common\Application\Errors.txt">
@@ -3222,5 +3232,8 @@
   </ItemGroup>
   <ItemGroup>
     <Midl Include="hMailServer.idl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="hMailServer.rc" />
   </ItemGroup>
 </Project>
