@@ -21,7 +21,6 @@ obj/
 _ReSharper.*/
 .vs/
 
-*.vcxproj.filters
 *.orig
 *.sdf
 *.opensdf
