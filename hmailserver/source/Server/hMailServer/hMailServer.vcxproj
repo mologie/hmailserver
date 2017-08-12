@@ -1201,7 +1201,7 @@ EXIT 0
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\libressl-2.5.5-windows\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\OpenSSL-$(Platform)-1.0.2L\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;UNICODE;_UNICODE;BOOST_DATE_TIME_NO_LIB;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -1220,10 +1220,10 @@ EXIT 0
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>libcrypto-41.lib;libssl-43.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>$(OutDir)hMailServer.exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\libressl-2.5.5-windows\$(PlatformShortName);..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\OpenSSL-$(Platform)-1.0.2L\lib;..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Windows</SubSystem>
@@ -1258,7 +1258,7 @@ EXIT 0
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\libressl-2.5.5-windows\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\OpenSSL-$(Platform)-1.0.2L\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;UNICODE;_UNICODE;BOOST_DATE_TIME_NO_LIB;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>Async</ExceptionHandling>
@@ -1277,10 +1277,10 @@ EXIT 0
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>libcrypto-41.lib;libssl-43.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ShowProgress>NotSet</ShowProgress>
       <OutputFile>$(OutDir)hMailServer.exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\libressl-2.5.5-windows\$(PlatformShortName);..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\OpenSSL-$(Platform)-1.0.2L\lib;..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Windows</SubSystem>
@@ -1314,7 +1314,7 @@ EXIT 0
     <ClCompile>
       <AdditionalOptions>/MP /Zm200
  %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\libressl-2.5.5-windows\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\OpenSSL-$(Platform)-1.0.2L\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;UNICODE;_UNICODE;NDEBUG;BOOST_DATE_TIME_NO_LIB;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -1333,9 +1333,9 @@ EXIT 0
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/SAFESEH /ignore:4099 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>libcrypto-41.lib;libssl-43.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)hMailServer.exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\libressl-2.5.5-windows\$(PlatformShortName);..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\OpenSSL-$(Platform)-1.0.2L\lib;..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -1369,7 +1369,7 @@ EXIT 0
       <ProxyFileName>hMailServer_p.c</ProxyFileName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\libressl-2.5.5-windows\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);C:\local\boost_1_64_0;C:\local\OpenSSL-$(Platform)-1.0.2L\include;..\..\..\..\Libraries\mssqlce3.5;..\..\..\..\Libraries\libpq-9.6\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;UNICODE;_UNICODE;NDEBUG;BOOST_DATE_TIME_NO_LIB;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -1389,9 +1389,9 @@ EXIT 0
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>libcrypto-41.lib;libssl-43.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libeay32.lib;ssleay32.lib;libpq.lib;adsiid.lib;activeds.lib;IPHlpAPI.lib;Dnsapi.lib;Ws2_32.lib;crypt32.lib;secur32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)hMailServer.exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\libressl-2.5.5-windows\$(PlatformShortName);..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\local\boost_1_64_0\lib$(PlatformArchitecture)-msvc-14.1;C:\local\OpenSSL-$(Platform)-1.0.2L\lib;..\..\..\..\Libraries\libpq-9.6\$(PlatformShortName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
