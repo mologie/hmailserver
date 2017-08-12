@@ -168,6 +168,7 @@ namespace HM
       String GetSpamTestResultMessage_(std::set<std::shared_ptr<SpamTestResult> > testResult) const;
 
       // XCLIENT
+      const String& GetVirtualHostName_();
       IPAddress GetVirtualRemoteAddress_();
       unsigned long GetVirtualRemotePort_();
       inline String GetVRemoteIPStr_() { return GetVirtualRemoteAddress_().ToString(); }
@@ -236,7 +237,7 @@ namespace HM
       bool start_tls_used_;
 
       // XCLIENT
-      String xclient_remote_name_;
+      String xclient_name_;
       IPAddress xclient_addr_; bool xclient_addr_set_;
       uint16_t xclient_port_;
       IPAddress xclient_destaddr_; bool xclient_destaddr_set_;

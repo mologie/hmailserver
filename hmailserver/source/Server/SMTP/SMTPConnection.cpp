@@ -142,6 +142,7 @@ namespace HM
           GetConnectionSecurity() == CSSTARTTLSRequired)
       {
          SendBanner_();
+         EnqueueRead();
       }
 
    }
@@ -152,6 +153,7 @@ namespace HM
       if (GetConnectionSecurity() == CSSSL)
       {
          SendBanner_();
+         EnqueueRead();
       }
       else if (GetConnectionSecurity() == CSSTARTTLSOptional ||
                GetConnectionSecurity() == CSSTARTTLSRequired)
@@ -176,7 +178,6 @@ namespace HM
    void 
    SMTPConnection::SendBanner_()
    {
-
       String sWelcome = Configuration::Instance()->GetSMTPConfiguration()->GetWelcomeMessage();
 
       String sData = "220 ";
@@ -187,9 +188,6 @@ namespace HM
          sData += sWelcome;
 
       EnqueueWrite_(sData);
-
-      EnqueueRead();
-
    }
 
    AnsiString 
@@ -1484,7 +1482,7 @@ namespace HM
          sData += sAuth;
       }
 
-      sData += "\r\n250-XCLIENT NAME ADDR PORT PROTO HELO DESTADDR DESTPORT";
+      sData += "\r\n250-XCLIENT NAME ADDR PORT PROTO HELO LOGIN DESTADDR DESTPORT";
 
       sData += "\r\n250 HELP";
 
@@ -1930,7 +1928,7 @@ namespace HM
          return;
       }
 
-      String sXName, sXAddr, sXPort, sXProto, sXHelo, sXDestAddr, sXDestPort;
+      String sXName, sXAddr, sXPort, sXProto, sXHelo, sLogin, sXDestAddr, sXDestPort;
       IPAddress ipXAddr, ipXDestAddr;
       uint16_t iXPort = 0, iXDestPort = 0;
 
@@ -1971,7 +1969,14 @@ namespace HM
          {
             if (sValUpper != szUnavailable)
             {
-               sXAddr = sVal;
+               if (sVal.StartsWith(_T("IPV6:")))
+               {
+                  sXAddr = sVal.substr(5);
+               }
+               else
+               {
+                  sXAddr = sVal;
+               }
 
                if (!ipXAddr.TryParse(sXAddr))
                {
@@ -2022,14 +2027,21 @@ namespace HM
          }
          else if (sKey == _T("LOGIN"))
          {
-            SendErrorResponse_(501, "The LOGIN XCLIENT attribute is unsupported (and neither was it advertised - your client implementation is broken)");
-            return;
+            if (sValUpper != szUnavailable)
+               sLogin = sVal;
          }
          else if (sKey == _T("DESTADDR"))
          {
             if (sValUpper != szUnavailable)
             {
-               sXDestAddr = sVal;
+               if (sVal.StartsWith(_T("IPV6:")))
+               {
+                  sXDestAddr = sVal.substr(5);
+               }
+               else
+               {
+                  sXDestAddr = sVal;
+               }
 
                if (!ipXDestAddr.TryParse(sXDestAddr))
                {
@@ -2060,8 +2072,9 @@ namespace HM
       }
 
       // Apply
+      ResetLoginCredentials_();
       if (!sXName.IsEmpty())
-         xclient_remote_name_ = sXName;
+         xclient_name_ = sXName;
       if (!sXAddr.IsEmpty()) {
          xclient_addr_ = ipXAddr;
          xclient_addr_set_ = true;
@@ -2072,18 +2085,20 @@ namespace HM
          xclient_proto_ = sXProto;
       if (!sXHelo.IsEmpty())
          xclient_helo_ = sXHelo;
+      if (!sLogin.IsEmpty()) {
+         username_ = sLogin;
+         password_.Empty();
+         isAuthenticated_ = true;
+      }
       if (!sXDestAddr.IsEmpty()) {
          xclient_destaddr_ = ipXDestAddr;
          xclient_destaddr_set_ = true;
       }
       if (!sXDestPort.IsEmpty())
          xclient_destport_ = iXDestPort;
-
-      // Pretend that the client just connected
       helo_host_.Empty();
-      ResetLoginCredentials_();
-      ResetCurrentMessage_();
-      SendBanner_(); // resets current_state_
+      SendBanner_();
+      current_state_ = HEADER;
    }
 
    void
@@ -2375,6 +2390,12 @@ namespace HM
    SMTPConnection::ReportUnsupportedEsmtpExtension_(const String& parameter)
    {
       SendErrorResponse_(550, Formatter::Format("Unsupported ESMTP extension: {0}", parameter));
+   }
+
+   const String&
+   SMTPConnection::GetVirtualHostName_()
+   {
+      return xclient_name_;
    }
 
    IPAddress
