@@ -45,7 +45,8 @@
 #include "../Common/BO/Domain.h"
 
 #include "../Common/BO/Collection.h"
-#include "../common/persistence/PersistentDomain.h"
+#include "../Common/Persistence/PersistentDomain.h"
+#include "../Common/Persistence/PersistentSecurityRange.h"
 
 #include "../common/Threading/AsynchronousTask.h"
 #include "../common/Threading/WorkQueue.h"
@@ -394,7 +395,7 @@ namespace HM
    SMTPConnection::InitializeSpamProtectionType_(const String &sFromAddress)
    {
       // Check if spam protection is enabled for this IP address.
-      if (!GetSecurityRange()->GetSpamProtection() ||
+      if (!GetVirtualSecurityRange_()->GetSpamProtection() ||
            SpamProtection::IsWhiteListed(sFromAddress, GetVirtualRemoteAddress_()))
       {
          type_ = SPNone;
@@ -666,13 +667,13 @@ namespace HM
 
       bool authenticationRequired = true;
       if (localSender && localDelivery)
-         authenticationRequired = GetSecurityRange()->GetRequireSMTPAuthLocalToLocal();
+         authenticationRequired = GetVirtualSecurityRange_()->GetRequireSMTPAuthLocalToLocal();
       else if (localSender && !localDelivery)
-         authenticationRequired = GetSecurityRange()->GetRequireSMTPAuthLocalToExternal();
+         authenticationRequired = GetVirtualSecurityRange_()->GetRequireSMTPAuthLocalToExternal();
       else if (!localSender && localDelivery)
-         authenticationRequired = GetSecurityRange()->GetRequireSMTPAuthExternalToLocal();
+         authenticationRequired = GetVirtualSecurityRange_()->GetRequireSMTPAuthExternalToLocal();
       else if (!localSender && !localDelivery)
-         authenticationRequired = GetSecurityRange()->GetRequireSMTPAuthExternalToExternal();
+         authenticationRequired = GetVirtualSecurityRange_()->GetRequireSMTPAuthExternalToExternal();
 
       // If the user is local but not authenticated, maybe we should do SMTP authentication.
       if (authenticationRequired && !isAuthenticated_)
@@ -693,7 +694,7 @@ namespace HM
       else if (!localSender && !localDelivery)
          iRelayOption = SecurityRange::IPRANGE_RELAY_REMOTE_TO_REMOTE;
 
-      bool bAllowRelay = GetSecurityRange()->GetAllowOption(iRelayOption);
+      bool bAllowRelay = GetVirtualSecurityRange_()->GetAllowOption(iRelayOption);
          
       if (bAllowRelay == false)
       {
@@ -1272,7 +1273,7 @@ namespace HM
          }
       }      
 
-      if (GetSecurityRange()->GetVirusProtection())
+      if (GetVirtualSecurityRange_()->GetVirusProtection())
       {
          current_message_->SetFlagVirusScan(true);
       }
@@ -1699,7 +1700,7 @@ namespace HM
       if (!CheckStartTlsRequired_())
          return;
 
-      if (GetSecurityRange()->GetRequireTLSForAuth() && !IsSSLConnection())
+      if (GetVirtualSecurityRange_()->GetRequireTLSForAuth() && !IsSSLConnection())
       {
          SendErrorResponse_(530, "A SSL/TLS-connection is required for authentication.");
          return;
@@ -1914,7 +1915,7 @@ namespace HM
       static const wchar_t* szUnavailable = _T("[UNAVAILABLE]");
       static const wchar_t* szTempUnavail = _T("[TEMPUNAVAIL]");
 
-      bool bAllowXCLIENT = GetSecurityRange()->GetAllowOption(SecurityRange::IPRANGE_SMTP_XCLIENT);
+      bool bAllowXCLIENT = GetVirtualSecurityRange_()->GetAllowOption(SecurityRange::IPRANGE_SMTP_XCLIENT);
       if (!bAllowXCLIENT)
       {
          SendErrorResponse_(550, "Thou shalt not impersonate! (IP range lacks XCLIENT flag.)");
@@ -2078,6 +2079,7 @@ namespace HM
       if (!sXAddr.IsEmpty()) {
          xclient_addr_ = ipXAddr;
          xclient_addr_set_ = true;
+         xclient_security_range_ = NULL;
       }
       if (!sXPort.IsEmpty())
          xclient_port_ = iXPort;
@@ -2271,7 +2273,7 @@ namespace HM
       if (isAuthenticated_)
          return false;
 
-      if (!GetSecurityRange()->GetSpamProtection())
+      if (!GetVirtualSecurityRange_()->GetSpamProtection())
          return false;
 
       if (current_message_)
@@ -2408,6 +2410,21 @@ namespace HM
    SMTPConnection::GetVirtualRemotePort_()
    {
       return xclient_port_ > 0 ? xclient_port_ : GetSocket().remote_endpoint().port();
+   }
+
+   std::shared_ptr<SecurityRange>
+   SMTPConnection::GetVirtualSecurityRange_()
+   {
+      if (xclient_addr_set_)
+      {
+         if (!xclient_security_range_)
+            xclient_security_range_ = PersistentSecurityRange::ReadMatchingIP(xclient_addr_);
+         return xclient_security_range_;
+      }
+      else
+      {
+         return GetSecurityRange();
+      }
    }
 
    IPAddress

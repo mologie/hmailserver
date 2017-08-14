@@ -172,6 +172,7 @@ namespace HM
       IPAddress GetVirtualRemoteAddress_();
       unsigned long GetVirtualRemotePort_();
       inline String GetVRemoteIPStr_() { return GetVirtualRemoteAddress_().ToString(); }
+      std::shared_ptr<SecurityRange> GetVirtualSecurityRange_();
       IPAddress GetVirtualLocalAddress_();
       unsigned long GetVirtualLocalPort_();
       const String& GetVirtualHeloHost_();
@@ -239,6 +240,7 @@ namespace HM
       // XCLIENT
       String xclient_name_;
       IPAddress xclient_addr_; bool xclient_addr_set_;
+      std::shared_ptr<SecurityRange> xclient_security_range_;
       uint16_t xclient_port_;
       IPAddress xclient_destaddr_; bool xclient_destaddr_set_;
       uint16_t xclient_destport_;
