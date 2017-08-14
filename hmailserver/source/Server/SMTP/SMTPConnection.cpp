@@ -2079,7 +2079,7 @@ namespace HM
       if (!sXAddr.IsEmpty()) {
          xclient_addr_ = ipXAddr;
          xclient_addr_set_ = true;
-         xclient_security_range_ = NULL;
+         xclient_security_range_.reset();
       }
       if (!sXPort.IsEmpty())
          xclient_port_ = iXPort;
